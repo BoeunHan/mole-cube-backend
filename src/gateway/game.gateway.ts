@@ -6,6 +6,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import type { CubeAction } from 'src/common/types';
 
 @WebSocketGateway({
   cors: {
@@ -17,6 +18,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   private players: Record<string, string> = {};
+  private cubeHistories: CubeAction[] = [];
 
   handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
@@ -38,5 +40,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.data.userId = userId;
 
     this.server.emit('playersUpdate', this.players);
+  }
+
+  @SubscribeMessage('rotateCube')
+  handleRotateCube(client: Socket, action: CubeAction) {
+    this.cubeHistories.push(action);
+    console.log(this.cubeHistories);
+    this.server.emit('cubeHistoriesUpdate', this.cubeHistories);
   }
 }
