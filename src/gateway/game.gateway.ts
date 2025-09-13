@@ -24,14 +24,18 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket) {
     console.log(`Client disconnected: ${client.id}`);
-    delete this.players[client.id];
+    delete this.players[client.data.userId];
 
     this.server.emit('playersUpdate', this.players);
   }
 
   @SubscribeMessage('setNickname')
-  handleSetNickname(client: Socket, nickname: string) {
-    this.players[client.id] = nickname;
+  handleSetNickname(
+    client: Socket,
+    { userId, nickname }: { userId: string; nickname: string },
+  ) {
+    this.players[userId] = nickname;
+    client.data.userId = userId;
 
     this.server.emit('playersUpdate', this.players);
   }
