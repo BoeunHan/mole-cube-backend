@@ -58,7 +58,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const history = { nickname, action };
     this.cubeStatus.rotateCubeFace(action.face, action.clockwise);
     this.cubeActionHistories.push(history);
-    client.broadcast.emit('rotateCube:server', action);
     this.server.emit('cubeHistoryUpdate', history);
   }
 }
