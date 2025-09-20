@@ -33,7 +33,7 @@ export class CubeStatus {
     };
   }
 
-  setCubeColorsAfterRotation(face: Face, clockwise: boolean) {
+  rotateCubeFace(face: Face, clockwise: boolean) {
     const currentColors = this.faceColors[face];
     const isOpposite = face === Face.L || face === Face.U || face === Face.B;
 
