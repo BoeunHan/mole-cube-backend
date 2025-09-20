@@ -7,7 +7,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { CubeStatus } from 'src/common/cube-status';
-import type { CubeAction } from 'src/common/types';
+import type { CubeAction, CubeActionHistory } from 'src/common/types';
 
 @WebSocketGateway({
   cors: {
@@ -20,7 +20,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private players: Record<string, string> = {};
   private cubeStatus: CubeStatus;
-  private cubeHistories: CubeAction[] = [];
+  private cubeActionHistories: CubeActionHistory[] = [];
 
   constructor() {
     this.cubeStatus = new CubeStatus(3);
@@ -28,7 +28,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
-    client.emit('initCubeState', this.cubeStatus.faceColors);
+    client.emit('initCubeState', {
+      cubeColors: this.cubeStatus.faceColors,
+      histories: this.cubeActionHistories,
+    });
   }
 
   handleDisconnect(client: Socket) {
@@ -51,8 +54,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('rotateCube')
   handleRotateCube(client: Socket, action: CubeAction) {
-    this.cubeHistories.push(action);
+    const nickname = this.players[client.data.userId];
+    const history = { nickname, action };
     this.cubeStatus.rotateCubeFace(action.face, action.clockwise);
+    this.cubeActionHistories.push(history);
     client.broadcast.emit('rotateCube:server', action);
+    this.server.emit('cubeHistoryUpdate', history);
   }
 }

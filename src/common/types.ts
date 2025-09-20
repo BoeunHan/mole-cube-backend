@@ -5,3 +5,8 @@ export interface CubeAction {
   clockwise: boolean;
   timestamp: number;
 }
+
+export interface CubeActionHistory {
+  nickname: string;
+  action: CubeAction;
+}
