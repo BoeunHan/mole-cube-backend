@@ -13,8 +13,8 @@ export const DEFAULT_CUBE_COLORS: Record<Face, Color> = {
 export class CubeStatus {
   faceColors: Record<Face, Color[][]>;
 
-  constructor(size: number) {
-    this.faceColors = this.createCubeColors(size);
+  constructor() {
+    this.faceColors = this.createCubeColors(3);
   }
 
   private createCubeColors(size: number): Record<Face, Color[][]> {

@@ -6,8 +6,8 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { CubeStatus } from 'src/common/cube-status';
-import type { CubeAction, CubeActionHistory } from 'src/common/types';
+import type { CubeAction } from 'src/common/types';
+import { GameRoundState } from 'src/game/game-round.state';
 
 @WebSocketGateway({
   cors: {
@@ -19,19 +19,21 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   private players: Record<string, string> = {};
-  private cubeStatus: CubeStatus;
-  private cubeActionHistories: CubeActionHistory[] = [];
+  private roundState = new GameRoundState();
 
-  constructor() {
-    this.cubeStatus = new CubeStatus(3);
+  onModuleInit() {
+    this.startRound();
+  }
+
+  private startRound() {
+    this.roundState.openNextRound();
+
+    this.server.emit('startRound', this.roundState);
   }
 
   handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
-    client.emit('initCubeState', {
-      cubeColors: this.cubeStatus.faceColors,
-      histories: this.cubeActionHistories,
-    });
+    client.emit('initGameRound', this.roundState.getDisplayInfo());
   }
 
   handleDisconnect(client: Socket) {
@@ -58,9 +60,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const userId = client.data.userId as string;
     const nickname = this.players[userId];
-    const history = { userId, nickname, action };
-    this.cubeStatus.rotateCubeFace(action.face, action.clockwise);
-    this.cubeActionHistories.push(history);
+    const history = this.roundState.rotateCube(userId, nickname, action);
     this.server.emit('cubeHistoryUpdate', history);
   }
 }
