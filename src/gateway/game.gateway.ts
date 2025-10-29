@@ -18,7 +18,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  private players: Record<string, string> = {};
+  private playerNickname: Record<string, string> = {};
   private roundState = new GameRoundState();
 
   onModuleInit() {
@@ -38,9 +38,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket) {
     console.log(`Client disconnected: ${client.id}`);
-    delete this.players[client.data.userId];
+    delete this.playerNickname[client.data.userId];
+    this.roundState.leave(client.data.userId);
 
-    this.server.emit('playersUpdate', this.players);
+    this.server.emit('playersUpdate', {
+      players: this.roundState.playerQueue,
+      playerNickname: this.playerNickname,
+    });
   }
 
   @SubscribeMessage('setNickname')
@@ -48,10 +52,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client: Socket,
     { userId, nickname }: { userId: string; nickname: string },
   ) {
-    this.players[userId] = nickname;
+    this.playerNickname[userId] = nickname;
+    this.roundState.join(userId);
     client.data.userId = userId;
 
-    this.server.emit('playersUpdate', this.players);
+    this.server.emit('playersUpdate', {
+      players: this.roundState.playerQueue,
+      playerNickname: this.playerNickname,
+    });
   }
 
   @SubscribeMessage('rotateCube')
@@ -59,8 +67,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!this.roundState.isOpen) return;
 
     const userId = client.data.userId as string;
-    const nickname = this.players[userId];
-    const history = this.roundState.rotateCube(userId, nickname, action);
+    const history = this.roundState.rotateCube(userId, action);
     this.server.emit('cubeHistoryUpdate', history);
   }
 }
