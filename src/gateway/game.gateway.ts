@@ -33,6 +33,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
+    const userId = client.handshake.auth.userId as string;
+    if (userId) {
+      client.data.userId = userId;
+    }
     client.emit('initGameRound', this.roundState.getDisplayInfo());
   }
 
@@ -43,6 +47,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.server.emit('playersUpdate', {
       players: this.roundState.playerQueue,
+      currentPlayerId: this.roundState.currentPlayerId,
       playerNickname: this.playerNickname,
     });
   }
@@ -54,10 +59,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     this.playerNickname[userId] = nickname;
     this.roundState.join(userId);
-    client.data.userId = userId;
 
     this.server.emit('playersUpdate', {
       players: this.roundState.playerQueue,
+      currentPlayerId: this.roundState.currentPlayerId,
       playerNickname: this.playerNickname,
     });
   }
@@ -69,5 +74,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const userId = client.data.userId as string;
     const history = this.roundState.rotateCube(userId, action);
     this.server.emit('cubeHistoryUpdate', history);
+    this.server.emit('currentPlayerUpdate', this.roundState.currentPlayerId);
   }
 }
