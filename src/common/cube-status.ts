@@ -10,11 +10,29 @@ export const DEFAULT_CUBE_COLORS: Record<Face, Color> = {
   [Face.B]: Color.WHITE,
 };
 
+const SUHFFLE_COUNT = {
+  easy: 22,
+  normal: 35,
+  hard: 50,
+};
+
 export class CubeStatus {
   faceColors: Record<Face, Color[][]>;
 
-  constructor() {
+  constructor(level: 'easy' | 'normal' | 'hard') {
     this.faceColors = this.createCubeColors(3);
+    this.shuffleCube(level);
+  }
+
+  private shuffleCube(level: 'easy' | 'normal' | 'hard') {
+    const shuffleCount = SUHFFLE_COUNT[level];
+    const faces = Object.values(Face);
+
+    for (let i = 0; i < shuffleCount; i++) {
+      const randomFace = faces[Math.floor(Math.random() * faces.length)];
+      const randomClockwise = Math.random() < 0.5;
+      this.rotateCubeFace(randomFace, randomClockwise);
+    }
   }
 
   private createCubeColors(size: number): Record<Face, Color[][]> {

@@ -7,7 +7,7 @@ export class GameRoundState {
   openedAt: Date | null = null;
   closedAt: Date | null = null;
   actionHistories: CubeActionHistory[] = [];
-  cubeStatus = new CubeStatus();
+  cubeStatus = new CubeStatus('easy');
 
   openNextRound() {
     this.currentRound++;
@@ -15,6 +15,7 @@ export class GameRoundState {
     this.openedAt = new Date();
     this.closedAt = null;
     this.actionHistories = [];
+    this.cubeStatus = new CubeStatus('easy');
   }
 
   close() {
