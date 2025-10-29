@@ -7,6 +7,7 @@ export interface CubeAction {
 }
 
 export interface CubeActionHistory {
+  userId: string;
   nickname: string;
   action: CubeAction;
 }
