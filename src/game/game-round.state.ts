@@ -29,6 +29,13 @@ export class GameRoundState extends EventEmitter {
   }
 
   leave(playerId: string) {
+    // 한 명 남았는데 나가는 경우
+    if (this.playerQueue.length === 1) {
+      this.currentPlayerId = undefined;
+      this.turnEndTime = 0;
+      return;
+    }
+
     // 현재 차례인 사람이 나가는 경우
     if (this.currentPlayerId === playerId) {
       this.setNextTurn(playerId);
