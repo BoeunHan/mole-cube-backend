@@ -6,13 +6,19 @@ export class GameRoundState {
   isOpen = false;
   currentPlayerId?: string; // 현재 차례인 플레이어 ID
   playerQueue: string[] = []; // 플레이어 순서
+  turnEndTime: number = 0;
   openedAt: Date | null = null;
   closedAt: Date | null = null;
   actionHistories: CubeActionHistory[] = [];
   cubeStatus = new CubeStatus('easy');
 
+  private TURN_TIME = 10;
+
   join(playerId: string) {
-    if (this.playerQueue.length === 0) this.currentPlayerId = playerId;
+    if (this.playerQueue.length === 0) {
+      this.currentPlayerId = playerId;
+      this.turnEndTime = Date.now() + this.TURN_TIME * 1000;
+    }
     if (!this.playerQueue.includes(playerId)) this.playerQueue.push(playerId);
   }
 
@@ -35,6 +41,7 @@ export class GameRoundState {
     }
     const nextIndex = (currentIndex + 1) % queue.length;
     this.currentPlayerId = queue[nextIndex];
+    this.turnEndTime = Date.now() + this.TURN_TIME * 1000;
   }
 
   openNextRound() {
