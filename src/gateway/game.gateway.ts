@@ -23,6 +23,21 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   onModuleInit() {
     this.startRound();
+    this.roundState.on(
+      'turnUpdated',
+      ({
+        currentPlayerId,
+        turnEndTime,
+      }: {
+        currentPlayerId: string;
+        turnEndTime: number;
+      }) => {
+        this.server.emit('turnUpdated', {
+          currentPlayerId,
+          turnEndTime,
+        });
+      },
+    );
   }
 
   private startRound() {
@@ -64,7 +79,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       players: this.roundState.playerQueue,
       currentPlayerId: this.roundState.currentPlayerId,
       playerNickname: this.playerNickname,
-      turnEndTime: this.roundState.turnEndTime,
     });
   }
 
@@ -75,9 +89,5 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const userId = client.data.userId as string;
     const history = this.roundState.rotateCube(userId, action);
     this.server.emit('cubeHistoryUpdate', history);
-    this.server.emit('currentPlayerUpdate', {
-      currentPlayerId: this.roundState.currentPlayerId,
-      turnEndTime: this.roundState.turnEndTime,
-    });
   }
 }

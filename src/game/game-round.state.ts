@@ -1,7 +1,8 @@
 import { CubeAction, CubeActionHistory } from 'src/common/types';
 import { CubeStatus } from 'src/common/cube-status';
+import EventEmitter from 'events';
 
-export class GameRoundState {
+export class GameRoundState extends EventEmitter {
   currentRound = 0;
   isOpen = false;
   currentPlayerId?: string; // 현재 차례인 플레이어 ID
@@ -13,13 +14,18 @@ export class GameRoundState {
   cubeStatus = new CubeStatus('easy');
 
   private TURN_TIME = 10;
+  private turnTimeout?: NodeJS.Timeout;
 
   join(playerId: string) {
-    if (this.playerQueue.length === 0) {
-      this.currentPlayerId = playerId;
-      this.turnEndTime = Date.now() + this.TURN_TIME * 1000;
+    if (!this.playerQueue.includes(playerId)) {
+      this.playerQueue.push(playerId);
     }
-    if (!this.playerQueue.includes(playerId)) this.playerQueue.push(playerId);
+
+    if (this.playerQueue.length === 1) {
+      this.currentPlayerId = playerId;
+      this.scheduleTurnTimeout();
+      this.emitTurnUpdated();
+    }
   }
 
   leave(playerId: string) {
@@ -41,7 +47,26 @@ export class GameRoundState {
     }
     const nextIndex = (currentIndex + 1) % queue.length;
     this.currentPlayerId = queue[nextIndex];
+    this.scheduleTurnTimeout();
+    this.emitTurnUpdated();
+  }
+
+  private scheduleTurnTimeout() {
+    const currentPlayerId = this.currentPlayerId;
+    if (!currentPlayerId) return;
+    if (this.turnTimeout) clearTimeout(this.turnTimeout);
+
     this.turnEndTime = Date.now() + this.TURN_TIME * 1000;
+    this.turnTimeout = setTimeout(() => {
+      this.setNextTurn(currentPlayerId);
+    }, this.TURN_TIME * 1000);
+  }
+
+  private emitTurnUpdated() {
+    this.emit('turnUpdated', {
+      currentPlayerId: this.currentPlayerId,
+      turnEndTime: this.turnEndTime,
+    });
   }
 
   openNextRound() {
